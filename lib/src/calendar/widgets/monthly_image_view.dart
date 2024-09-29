@@ -15,13 +15,18 @@ class MonthlyImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 120.0,
-      child: Stack(
-        children: [
-          _buildParallaxImage(context),
-          _buildMonthName(context),
-        ],
+    return AspectRatio(
+      aspectRatio: 16 / 6,
+      child: ColoredBox(
+        color: Colors.red,
+        child: ClipRRect(
+          child: Stack(
+            children: [
+              _buildParallaxImage(context),
+              _buildMonthName(context),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -34,10 +39,13 @@ class MonthlyImageView extends StatelessWidget {
         backgroundImageKey: _backgroundImageKey,
       ),
       children: [
-        Image.asset(
-          key: _backgroundImageKey,
-          MiscUtils.generateMonthImages(monthRange.start.month),
-          fit: BoxFit.cover,
+        Transform.scale(
+          scale: 2.0,
+          child: Image.asset(
+            key: _backgroundImageKey,
+            MiscUtils.generateMonthImages(monthRange.start.month),
+            fit: BoxFit.contain,
+          ),
         ),
       ],
     );
