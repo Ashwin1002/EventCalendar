@@ -7,7 +7,7 @@ class AssetList {
   static const String campingNight = '$_imagesPath/camping_night.jpg';
   static const String festival = '$_imagesPath/circus.jpg';
   static const String farmField = '$_imagesPath/farm_field.jpg';
-  static const String grassLand = '$_imagesPath/grassland.pg';
+  static const String grassLand = '$_imagesPath/grassland.jpg';
   static const String lakeBonefire = '$_imagesPath/lake_bonfire.jpg';
   static const String rainyBeach = '$_imagesPath/rainy_beach.jpg';
   static const String summerBeach = '$_imagesPath/summer_beach.jpg';

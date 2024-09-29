@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_calendar/core/extension/date_extension.dart';
+import 'package:google_calendar/core/core.dart';
+import 'package:google_calendar/src/calendar/widgets/widgets.dart';
 
 int? previousIndex;
 
@@ -25,17 +26,16 @@ class CalendarListScreen extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '$monthRange',
-              ),
+              MonthlyImageView(monthRange: monthRange),
+              5.0.verticalSpace,
               ...List.generate(
                 weeklyRanges.length,
                 (index) {
                   final weeklyRange = weeklyRanges[index];
-                  return Text('$weeklyRange');
+                  return ScheduleWeeklyDataView(weeklyRange: weeklyRange);
                 },
               ),
-              const SizedBox(height: 20.0),
+              15.0.verticalSpace,
             ],
           );
         },

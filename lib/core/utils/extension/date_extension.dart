@@ -15,6 +15,8 @@ extension DateExtension on DateTime {
   // get the last day of upcoming month from current date
   DateTime get lastDayOfNextMonth =>
       DateTime(year, month + 2, 1).subtract(const Duration(days: 1));
+
+  bool get isCurrentYear => year == DateTime.now().toUtc().year;
 }
 
 extension DateTimeRangeExtension on DateTimeRange {
@@ -51,6 +53,8 @@ extension DateTimeRangeExtension on DateTimeRange {
 
     return monthRanges;
   }
+
+  bool get isSameMonth => start.month == end.month;
 }
 
 List<DateTimeRange> getWeeklyDatesRange(
