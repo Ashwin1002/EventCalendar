@@ -1,1 +1,1 @@
-export 'calendar/calendar.dart';
+export 'schedule/calendar.dart';

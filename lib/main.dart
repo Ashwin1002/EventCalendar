@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_calendar/src/calendar/calendar_list_screen.dart';
+import 'package:google_calendar/src/schedule/view/schedule_listview.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const CalendarListScreen(),
+      home: const ScheduleListview(),
     );
   }
 }

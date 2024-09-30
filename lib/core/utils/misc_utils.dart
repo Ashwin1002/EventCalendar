@@ -17,20 +17,4 @@ class MiscUtils {
       _ => AssetList.winteLake,
     };
   }
-
-  static DateTime updateDateByMonth(DateTime currentDate, int monthOffset) {
-    // Calculate the new year and month by adding the offset
-    int newYear =
-        currentDate.year + ((currentDate.month + monthOffset - 1) ~/ 12);
-    int newMonth = (currentDate.month + monthOffset - 1) % 12 + 1;
-
-    // Handle cases where day may not exist in the new month (e.g., February 30th)
-    int lastDayOfNewMonth = DateTime(newYear, newMonth + 1, 0).day;
-    int newDay = currentDate.day <= lastDayOfNewMonth
-        ? currentDate.day
-        : lastDayOfNewMonth;
-
-    // Return the updated date
-    return DateTime(newYear, newMonth, newDay);
-  }
 }

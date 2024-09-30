@@ -59,29 +59,3 @@ extension DateTimeRangeExtension on DateTimeRange {
 
   bool get isSameMonth => start.month == end.month;
 }
-
-List<DateTimeRange> getWeeklyDatesRange(
-    DateTime monthStart, DateTime monthEnd) {
-  List<DateTimeRange> weekRanges = [];
-  DateTime current = monthStart;
-
-  while (current.isBefore(monthEnd) || current.isAtSameMomentAs(monthEnd)) {
-    // Calculate the end of the week (7 days from current)
-    DateTime weekEnd = current.add(const Duration(days: 6));
-
-    // If the week end exceeds the month end, extend to the next month to complete the week
-    if (weekEnd.isAfter(monthEnd)) {
-      if (weekEnd.isAfter(monthStart.lastDayOfNextMonth)) {
-        weekEnd = monthStart.lastDayOfNextMonth;
-      }
-    }
-
-    // Add the current week range
-    weekRanges.add(DateTimeRange(start: current, end: weekEnd));
-
-    // Move to the next week (start of next week is the day after the current week end)
-    current = weekEnd.add(const Duration(days: 1));
-  }
-
-  return weekRanges;
-}
