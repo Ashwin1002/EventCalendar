@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 extension DateExtension on DateTime {
   /// get first day of month from current date
@@ -17,6 +18,8 @@ extension DateExtension on DateTime {
       DateTime(year, month + 2, 1).subtract(const Duration(days: 1));
 
   bool get isCurrentYear => year == DateTime.now().toUtc().year;
+
+  String format([String value = 'd-M-y']) => DateFormat(value).format(this);
 }
 
 extension DateTimeRangeExtension on DateTimeRange {

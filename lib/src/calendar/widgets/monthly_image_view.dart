@@ -17,16 +17,11 @@ class MonthlyImageView extends StatelessWidget {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 16 / 6,
-      child: ColoredBox(
-        color: Colors.red,
-        child: ClipRRect(
-          child: Stack(
-            children: [
-              _buildParallaxImage(context),
-              _buildMonthName(context),
-            ],
-          ),
-        ),
+      child: Stack(
+        children: [
+          _buildParallaxImage(context),
+          _buildMonthName(context),
+        ],
       ),
     );
   }

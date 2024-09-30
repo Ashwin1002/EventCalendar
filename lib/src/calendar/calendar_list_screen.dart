@@ -17,14 +17,17 @@ class CalendarListScreen extends StatefulWidget {
 }
 
 class _CalendarListScreenState extends State<CalendarListScreen> {
-  double value = 0;
+  int value = 0;
   @override
   Widget build(BuildContext context) {
     final dateRange = DateTimeRange(start: firstDay, end: lastDay);
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          value++;
+          MiscUtils.updateDateByMonth(
+            DateTime.now().toUtc(),
+            value++,
+          );
           setState(() {});
         },
         heroTag: 'add-fab',
@@ -37,8 +40,11 @@ class _CalendarListScreenState extends State<CalendarListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DropdownMonth(
-              value: value,
+            ColoredBox(
+              color: Colors.red,
+              child: DropdownMonth(
+                value: value.toDouble(),
+              ),
             ),
             Expanded(
               child: ListView.builder(
@@ -94,12 +100,14 @@ class DropdownMonth extends StatelessWidget {
         .merge(const TextStyle(fontFeatures: [FontFeature.tabularFigures()]));
     // Layout number "0" (probably the widest digit) to see its size
     final prototypeDigit = TextPainter(
-      text: TextSpan(text: '0', style: style),
+      text: TextSpan(text: 'September', style: style),
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
 
     final size = prototypeDigit.size;
+
+    log('size => $size');
     const padding = EdgeInsets.zero;
     return TweenAnimationBuilder(
       duration: kThemeAnimationDuration,
@@ -110,6 +118,8 @@ class DropdownMonth extends StatelessWidget {
         final w = size.width + padding.horizontal;
         final h = size.height + padding.vertical;
 
+        log('whole => $whole');
+
         return Padding(
           key: ValueKey(value),
           padding: const EdgeInsets.all(8.0),
@@ -119,12 +129,12 @@ class DropdownMonth extends StatelessWidget {
             child: Stack(
               children: <Widget>[
                 _buildSingleDigit(
-                  digit: whole % 10,
+                  digit: whole,
                   offset: h * decimal,
                   opacity: 1 - decimal,
                 ),
                 _buildSingleDigit(
-                  digit: (whole + 1) % 10,
+                  digit: whole,
                   offset: h * decimal - h,
                   opacity: decimal,
                 ),
@@ -160,14 +170,19 @@ class DropdownMonth extends StatelessWidget {
     required double offset,
     required double opacity,
   }) {
-    log('months => ${Months.fromNum(digit + 1).name}');
+    final currentDate = DateTime.now().toUtc();
+    final monthDate = MiscUtils.updateDateByMonth(currentDate, digit);
+    final monthName =
+        monthDate.format(monthDate.isCurrentYear ? 'MMMM' : 'MMM y');
+
+    log('month name => $monthName');
     // Try to avoid using the `Opacity` widget when possible, for performance.
     final Widget child;
     if (Colors.black.opacity == 1) {
       // If the text style does not involve transparency, we can modify
       // the text color directly.
       child = Text(
-        Months.fromNum(digit + 1).name,
+        monthName,
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.black.withOpacity(opacity.clamp(0, 1))),
       );
@@ -176,7 +191,7 @@ class DropdownMonth extends StatelessWidget {
       child = Opacity(
         opacity: opacity.clamp(0, 1),
         child: Text(
-          Months.fromNum(digit + 1).name,
+          monthName,
           textAlign: TextAlign.center,
         ),
       );
