@@ -18,7 +18,7 @@ class MonthlyImageView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 5.0),
       child: AspectRatio(
-        aspectRatio: 16 / 6,
+        aspectRatio: 16 / 7,
         child: Stack(
           children: [
             _buildParallaxImage(context),

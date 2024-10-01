@@ -156,7 +156,7 @@ class _ScheduleListviewState extends State<ScheduleListview> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CustomScaffold(
       appBar: AppBar(
         leading: const Icon(Icons.menu),
         elevation: 3,
@@ -175,46 +175,44 @@ class _ScheduleListviewState extends State<ScheduleListview> {
           },
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ScrollablePositionedList.builder(
-                key: const ValueKey<String>(
-                  'schedule_grouped_list_view_builder',
-                ),
-                itemScrollController: itemScrollController,
-                itemPositionsListener: itemPositionsListener,
-                itemCount: dateRange.totalMonthsCount,
-                itemBuilder: (context, index) {
-                  final monthRange = dateRange.monthRanges[index];
-                  final weeklyRanges = DateTimeUtils.getWeeklyDatesRange(
-                    monthRange.start,
-                    monthRange.end,
-                  );
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      MonthlyImageView(monthRange: monthRange),
-                      5.0.verticalSpace,
-                      ...List.generate(
-                        weeklyRanges.length,
-                        (index) {
-                          final weeklyRange = weeklyRanges[index];
-                          return ScheduleWeeklyDataView(
-                            weeklyRange: weeklyRange,
-                          );
-                        },
-                      ),
-                      15.0.verticalSpace,
-                    ],
+      mobile: (context) => _buildMobileVIew(),
+      tablet: (context) => _buildMobileVIew(),
+    );
+  }
+
+  Widget _buildMobileVIew() {
+    return SafeArea(
+      child: ScrollablePositionedList.builder(
+        key: const ValueKey<String>(
+          'schedule_grouped_list_view_builder',
+        ),
+        itemScrollController: itemScrollController,
+        itemPositionsListener: itemPositionsListener,
+        itemCount: dateRange.totalMonthsCount,
+        itemBuilder: (context, index) {
+          final monthRange = dateRange.monthRanges[index];
+          final weeklyRanges = DateTimeUtils.getWeeklyDatesRange(
+            monthRange.start,
+            monthRange.end,
+          );
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MonthlyImageView(monthRange: monthRange),
+              5.0.verticalSpace,
+              ...List.generate(
+                weeklyRanges.length,
+                (index) {
+                  final weeklyRange = weeklyRanges[index];
+                  return ScheduleWeeklyDataView(
+                    weeklyRange: weeklyRange,
                   );
                 },
               ),
-            ),
-          ],
-        ),
+              15.0.verticalSpace,
+            ],
+          );
+        },
       ),
     );
   }

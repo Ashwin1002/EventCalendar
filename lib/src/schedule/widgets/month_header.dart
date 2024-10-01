@@ -85,7 +85,7 @@ class MonthHeader extends StatelessWidget {
       // Otherwise, we have to use the `Opacity` widget (less performant).
       child = AnimatedOpacity(
         opacity: opacity.clamp(0, 1),
-        duration: const Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 200),
         child: Text(
           monthName,
           textAlign: TextAlign.center,
