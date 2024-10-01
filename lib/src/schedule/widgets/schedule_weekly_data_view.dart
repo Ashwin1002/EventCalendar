@@ -50,14 +50,14 @@ class ScheduleWeeklyDataView extends StatelessWidget {
                     children: [
                       Text(
                         'MON',
-                        style: context.theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.contentTertiary,
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: context.theme.tertiary,
                         ),
                       ),
                       Text(
                         '30',
                         textAlign: TextAlign.center,
-                        style: context.theme.textTheme.headlineSmall,
+                        style: context.textTheme.headlineSmall,
                       ),
                     ],
                   ),

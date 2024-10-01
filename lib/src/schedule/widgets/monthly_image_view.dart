@@ -56,10 +56,7 @@ class MonthlyImageView extends StatelessWidget {
       child: Text(
         DateFormat(monthRange.start.isCurrentYear ? 'MMMM' : 'MMMM y')
             .format(monthRange.start),
-        style: context.theme.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w400,
-          letterSpacing: -.4,
-        ),
+        style: context.textTheme.titleLarge,
       ),
     );
   }
