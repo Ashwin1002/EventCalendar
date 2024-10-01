@@ -15,13 +15,16 @@ class MonthlyImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 6,
-      child: Stack(
-        children: [
-          _buildParallaxImage(context),
-          _buildMonthName(context),
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 5.0),
+      child: AspectRatio(
+        aspectRatio: 16 / 6,
+        child: Stack(
+          children: [
+            _buildParallaxImage(context),
+            _buildMonthName(context),
+          ],
+        ),
       ),
     );
   }

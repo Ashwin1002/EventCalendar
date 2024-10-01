@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_calendar/core/core.dart';
 
+/// Builds the month header of the calendar dropdown.
+///
+/// Requires params `value` and `range`
+///
+/// [value] : the current index of the data range
+/// [range] : the start date and end date range of the calendar
 class MonthHeader extends StatelessWidget {
   const MonthHeader({
     super.key,
     this.visible = true,
     required this.value,
+    required this.range,
   });
   final bool visible;
   final double value;
+  final DateTimeRange range;
 
-  static const _animationDuration = Duration(milliseconds: 250);
+  static const _animationDuration = Duration(milliseconds: 200);
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +26,7 @@ class MonthHeader extends StatelessWidget {
     return TweenAnimationBuilder(
       duration: _animationDuration,
       tween: Tween(end: value),
+      curve: Curves.ease,
       builder: (_, double value, __) {
         final monthRounded = value ~/ 1;
         final monthWithFractionalValue = value - monthRounded;
@@ -25,7 +34,6 @@ class MonthHeader extends StatelessWidget {
         final h = size.height;
 
         return SizedBox(
-          // key: ValueKey<double>(value),
           width: w,
           height: h,
           child: Stack(
@@ -53,8 +61,8 @@ class MonthHeader extends StatelessWidget {
     required double offset,
     required double opacity,
   }) {
-    final currentDate = DateTime.now().toUtc();
-    final monthDate = DateTimeUtils.updateDateByMonth(currentDate, value);
+    // final currentDate = DateTime.now().toUtc();
+    final monthDate = range.monthRanges[value].start;
     final monthName =
         monthDate.format(monthDate.isCurrentYear ? 'MMMM' : 'MMM y');
 
@@ -89,7 +97,7 @@ class MonthHeader extends StatelessWidget {
     }
     return Positioned(
       left: 0,
-      right: 0,
+      // right: 0,
       top: 0,
       bottom: offset + EdgeInsets.zero.bottom,
       child: Row(

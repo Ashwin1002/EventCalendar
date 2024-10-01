@@ -75,8 +75,6 @@ class _ScheduleListviewState extends State<ScheduleListview> {
 
   Size? _currentPositionedListSize;
   int? _earlyChangePositionOffset;
-  int? currentMonthInValue;
-  int? previousMonthInValue;
   Timer? _debounce;
 
   final DateTimeRange _currentMonthRange = DateTimeRange(
@@ -84,7 +82,7 @@ class _ScheduleListviewState extends State<ScheduleListview> {
     end: DateTimeUtils.lastDayOfMonth(DateTime.now().toUtc()),
   );
 
-  final _monthChangeNotifier = ValueNotifier<double?>(null);
+  final _monthChangeNotifier = ValueNotifier<int?>(null);
 
   @override
   void initState() {
@@ -102,6 +100,7 @@ class _ScheduleListviewState extends State<ScheduleListview> {
     log('current month range {$_currentMonthRange} index => $currentIdx');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _monthChangeNotifier.value = currentIdx;
       _triggerScrollInPositionedListIfNeeded(currentIdx, animate: false);
     });
   }
@@ -130,20 +129,7 @@ class _ScheduleListviewState extends State<ScheduleListview> {
     );
 
     if (displayedIndex != null) {
-      // Check if the current month is different from the previous one
-      if (currentMonthInValue != displayedIndex) {
-        // Update the previous month before updating the current month
-        previousMonthInValue = currentMonthInValue;
-        currentMonthInValue = displayedIndex;
-
-        _monthChangeNotifier.value =
-            ((currentMonthInValue ?? 0) - (previousMonthInValue ?? 0))
-                .toDouble();
-
-        // Log both previous and current values for tracking
-        log('Previous month index => $previousMonthInValue');
-        log('Current month index => $currentMonthInValue');
-      }
+      _monthChangeNotifier.value = displayedIndex;
     }
   }
 
@@ -171,20 +157,28 @@ class _ScheduleListviewState extends State<ScheduleListview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: const Icon(Icons.menu),
+        elevation: 3,
+        toolbarHeight: null,
+        flexibleSpace: Container(),
+        title: ValueListenableBuilder<int?>(
+          valueListenable: _monthChangeNotifier,
+          builder: (context, value, _) {
+            return ColoredBox(
+              color: Colors.red,
+              child: MonthHeader(
+                value: (value ?? 0).toDouble(),
+                range: dateRange,
+              ),
+            );
+          },
+        ),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ValueListenableBuilder<double?>(
-                valueListenable: _monthChangeNotifier,
-                builder: (context, value, _) {
-                  return ColoredBox(
-                    color: Colors.red,
-                    child: MonthHeader(
-                      value: value ?? 0,
-                    ),
-                  );
-                }),
             Expanded(
               child: ScrollablePositionedList.builder(
                 key: const ValueKey<String>(
@@ -209,7 +203,8 @@ class _ScheduleListviewState extends State<ScheduleListview> {
                         (index) {
                           final weeklyRange = weeklyRanges[index];
                           return ScheduleWeeklyDataView(
-                              weeklyRange: weeklyRange);
+                            weeklyRange: weeklyRange,
+                          );
                         },
                       ),
                       15.0.verticalSpace,
