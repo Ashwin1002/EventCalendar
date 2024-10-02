@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_calendar/core/core.dart';
 import 'package:google_calendar/src/schedule/widgets/widgets.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 DateTime firstDay = DateTime(2020);
 DateTime lastDay = DateTime(DateTime.now().year + 5);
@@ -84,6 +85,8 @@ class _ScheduleListviewState extends State<ScheduleListview> {
 
   final _monthChangeNotifier = ValueNotifier<int?>(null);
 
+  bool _isExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -160,19 +163,42 @@ class _ScheduleListviewState extends State<ScheduleListview> {
       appBar: AppBar(
         leading: const Icon(Icons.menu),
         elevation: 3,
-        toolbarHeight: null,
-        flexibleSpace: Container(),
         title: ValueListenableBuilder<int?>(
           valueListenable: _monthChangeNotifier,
           builder: (context, value, _) {
             return ColoredBox(
               color: Colors.red,
-              child: MonthHeader(
-                value: (value ?? 0).toDouble(),
-                range: dateRange,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                child: MonthHeader(
+                  value: (value ?? 0).toDouble(),
+                  range: dateRange,
+                ),
               ),
             );
           },
+        ),
+        bottom: PreferredSize(
+          preferredSize: Size(
+            context.maxWidth,
+            _isExpanded ? 500.0 : 0.0,
+          ),
+          child: AnimatedSize(
+            duration: kThemeAnimationDuration,
+            child: !_isExpanded
+                ? const SizedBox.shrink()
+                : TableCalendar<DateTime>(
+                    focusedDay: _currentMonthRange.start,
+                    firstDay: firstDay,
+                    lastDay: lastDay,
+                    headerVisible: false,
+                    daysOfWeekVisible: false,
+                  ),
+          ),
         ),
       ),
       mobile: (context) => _buildMobileVIew(),
