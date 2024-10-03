@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:google_calendar/core/core.dart';
 
@@ -44,9 +46,9 @@ class MonthHeader extends StatelessWidget {
                 opacity: 1 - monthWithFractionalValue,
               ),
               _buildMonthName(
-                value: monthRounded,
+                value: monthRounded + 1,
                 // offset: h * monthWithFractionalValue - h,
-                offset: h * monthWithFractionalValue - h - 5,
+                offset: h * monthWithFractionalValue - h,
                 opacity: monthWithFractionalValue,
               ),
             ],
@@ -68,30 +70,46 @@ class MonthHeader extends StatelessWidget {
 
     // Try to avoid using the `Opacity` widget when possible, for performance.
     final Widget child;
-    if (Colors.black.opacity == 1) {
+    if (opacity == 1) {
       // If the text style does not involve transparency, we can modify
       // the text color directly.
-      child = Text(
-        monthName,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 16.0,
-          color: Colors.black.withOpacity(
-            opacity.clamp(0, 1),
+      child = Row(
+        children: [
+          Text(
+            monthName,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16.0,
+              color: Colors.black.withOpacity(
+                opacity.clamp(0, 1),
+              ),
+            ),
           ),
-        ),
+          const Icon(
+            Icons.arrow_drop_down,
+            size: 24.0,
+          ),
+        ],
       );
     } else {
+      log('in animating condition');
       // Otherwise, we have to use the `Opacity` widget (less performant).
-      child = AnimatedOpacity(
+      child = Opacity(
         opacity: opacity.clamp(0, 1),
-        duration: const Duration(milliseconds: 200),
-        child: Text(
-          monthName,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 16.0,
-          ),
+        child: Row(
+          children: [
+            Text(
+              monthName,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16.0,
+              ),
+            ),
+            const Icon(
+              Icons.arrow_drop_down,
+              size: 24.0,
+            ),
+          ],
         ),
       );
     }
@@ -100,18 +118,7 @@ class MonthHeader extends StatelessWidget {
       // right: 0,
       top: 0,
       bottom: offset + EdgeInsets.zero.bottom,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          child,
-          2.0.horizontalSpace,
-          const Icon(
-            Icons.arrow_drop_down,
-            size: 24.0,
-          ),
-        ],
-      ),
+      child: child,
     );
   }
 }
