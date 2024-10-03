@@ -4,7 +4,7 @@ import 'package:google_calendar/core/core.dart';
 /// Light Colors pallete for theme ligh
 class AppColorsLight {
   // main colors light
-  static final primary = "#445e91".toColor();
+  static final primary = "#1266F1".toColor();
   static final secondary = "#575e71".toColor();
   static final tertiary = "#0b6780".toColor();
   static final error = "#ba1a1a".toColor();

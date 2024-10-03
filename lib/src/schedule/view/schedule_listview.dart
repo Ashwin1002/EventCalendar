@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_calendar/core/core.dart';
 import 'package:google_calendar/src/schedule/widgets/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -160,49 +161,24 @@ class _ScheduleListviewState extends State<ScheduleListview> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      appBar: AppBar(
-        leading: const Icon(Icons.menu),
-        elevation: 3,
-        title: ValueListenableBuilder<int?>(
-          valueListenable: _monthChangeNotifier,
-          builder: (context, value, _) {
-            return ColoredBox(
-              color: Colors.red,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
-                },
-                child: MonthHeader(
-                  value: (value ?? 0).toDouble(),
-                  range: dateRange,
-                ),
-              ),
-            );
-          },
-        ),
-        bottom: PreferredSize(
-          preferredSize: Size(
-            context.maxWidth,
-            _isExpanded ? 500.0 : 0.0,
-          ),
-          child: AnimatedSize(
-            duration: kThemeAnimationDuration,
-            child: !_isExpanded
-                ? const SizedBox.shrink()
-                : TableCalendar<DateTime>(
-                    focusedDay: _currentMonthRange.start,
-                    firstDay: firstDay,
-                    lastDay: lastDay,
-                    headerVisible: false,
-                    daysOfWeekVisible: false,
-                  ),
-          ),
+      mobile: (context) => SafeArea(
+        child: Column(
+          children: [
+            CustomAppbar(
+              monthChangeNotifier: _monthChangeNotifier,
+              currentMonthRange: _currentMonthRange,
+              onHeaderExpanded: (isExpanded) {
+                _isExpanded = isExpanded;
+                setState(() {});
+              },
+            ),
+            Expanded(
+              child: _buildMobileVIew(),
+            )
+          ],
         ),
       ),
-      mobile: (context) => _buildMobileVIew(),
-      tablet: (context) => _buildMobileVIew(),
+      tablet: (context) => const Placeholder(),
     );
   }
 
@@ -212,6 +188,7 @@ class _ScheduleListviewState extends State<ScheduleListview> {
         key: const ValueKey<String>(
           'schedule_grouped_list_view_builder',
         ),
+        physics: _isExpanded ? const NeverScrollableScrollPhysics() : null,
         itemScrollController: itemScrollController,
         itemPositionsListener: itemPositionsListener,
         itemCount: dateRange.totalMonthsCount,
@@ -239,6 +216,158 @@ class _ScheduleListviewState extends State<ScheduleListview> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class CustomAppbar extends StatefulWidget {
+  const CustomAppbar({
+    super.key,
+    required ValueNotifier<int?> monthChangeNotifier,
+    required DateTimeRange currentMonthRange,
+    this.onHeaderExpanded,
+  })  : _monthChangeNotifier = monthChangeNotifier,
+        _currentMonthRange = currentMonthRange;
+
+  final ValueNotifier<int?> _monthChangeNotifier;
+
+  final DateTimeRange _currentMonthRange;
+
+  final void Function(bool isExpanded)? onHeaderExpanded;
+
+  @override
+  State<CustomAppbar> createState() => _CustomAppbarState();
+}
+
+class _CustomAppbarState extends State<CustomAppbar>
+    with SingleTickerProviderStateMixin {
+  static final Animatable<double> _easeInTween =
+      CurveTween(curve: Curves.easeIn);
+  static final Animatable<double> _halfTween =
+      Tween<double>(begin: 0.0, end: 0.5);
+
+  late AnimationController _controller;
+  late Animation<double> _iconTurns;
+
+  bool _isExpanded = false;
+  Size? _calendarSize;
+
+  final _calendarKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPersistentFrameCallback((_) {
+      final box = _calendarKey.currentContext?.findRenderObject() as RenderBox?;
+      _calendarSize = box?.size;
+      setState(() {});
+    });
+
+    _initAnimation();
+  }
+
+  void _initAnimation() {
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 200));
+    _iconTurns = _controller.drive(_halfTween.chain(_easeInTween));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ValueListenableBuilder<int?>(
+          valueListenable: widget._monthChangeNotifier,
+          builder: (context, value, _) {
+            return ColoredBox(
+              color: Colors.red,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                    if (_isExpanded) {
+                      _controller.forward();
+                    } else {
+                      _controller.reverse().then<void>((void value) {
+                        if (!mounted) {
+                          return;
+                        }
+                        setState(() {
+                          // Rebuild without widget.children.
+                        });
+                      });
+                    }
+                  });
+
+                  widget.onHeaderExpanded?.call(_isExpanded);
+                },
+                child: MonthHeader(
+                  key: const ValueKey('month_scrolling_header'),
+                  value: (value ?? 0).toDouble(),
+                  range: dateRange,
+                  icon: _icon(),
+                ),
+              ),
+            );
+          },
+        ),
+        AnimatedSize(
+          duration: kThemeChangeDuration,
+          child: SizedBox(
+            height: _isExpanded ? _calendarSize?.height : 0,
+            child: _isExpanded ? _buildCalendarView() : const SizedBox.shrink(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  RotationTransition _icon() {
+    return RotationTransition(
+      turns: _iconTurns,
+      child: const Icon(
+        Icons.arrow_drop_down,
+        size: 24.0,
+      ),
+    );
+  }
+
+  Widget _buildCalendarView() {
+    return TableCalendar(
+      key: _calendarKey,
+      focusedDay: widget._currentMonthRange.start,
+      firstDay: firstDay,
+      lastDay: lastDay,
+      headerVisible: false,
+      calendarFormat: CalendarFormat.month,
+      startingDayOfWeek: StartingDayOfWeek.saturday,
+      weekendDays: const [],
+      daysOfWeekHeight: 40.0,
+      rowHeight: 48.0,
+      daysOfWeekStyle: DaysOfWeekStyle(
+        dowTextFormatter: (date, locale) => DateFormat.EEEEE(locale).format(
+          date,
+        ),
+        weekdayStyle: context.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ) ??
+            const TextStyle(),
+      ),
+      calendarStyle: CalendarStyle(
+        outsideDaysVisible: false,
+        todayDecoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: context.theme.primary,
+        ),
+        defaultTextStyle: context.textTheme.bodyMedium ?? const TextStyle(),
       ),
     );
   }

@@ -15,10 +15,12 @@ class MonthHeader extends StatelessWidget {
     this.visible = true,
     required this.value,
     required this.range,
+    this.icon,
   });
   final bool visible;
   final double value;
   final DateTimeRange range;
+  final Widget? icon;
 
   static const _animationDuration = Duration(milliseconds: 200);
 
@@ -85,10 +87,11 @@ class MonthHeader extends StatelessWidget {
               ),
             ),
           ),
-          const Icon(
-            Icons.arrow_drop_down,
-            size: 24.0,
-          ),
+          icon ??
+              const Icon(
+                Icons.arrow_drop_down,
+                size: 24.0,
+              ),
         ],
       );
     } else {
@@ -105,10 +108,11 @@ class MonthHeader extends StatelessWidget {
                 fontSize: 16.0,
               ),
             ),
-            const Icon(
-              Icons.arrow_drop_down,
-              size: 24.0,
-            ),
+            icon ??
+                const Icon(
+                  Icons.arrow_drop_down,
+                  size: 24.0,
+                ),
           ],
         ),
       );
