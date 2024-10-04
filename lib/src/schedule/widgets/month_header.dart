@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:google_calendar/core/core.dart';
 
@@ -95,7 +93,7 @@ class MonthHeader extends StatelessWidget {
         ],
       );
     } else {
-      log('in animating condition');
+      // log('in animating condition');
       // Otherwise, we have to use the `Opacity` widget (less performant).
       child = Opacity(
         opacity: opacity.clamp(0, 1),

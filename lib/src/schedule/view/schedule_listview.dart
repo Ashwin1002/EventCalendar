@@ -4,9 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_calendar/core/core.dart';
 import 'package:google_calendar/src/schedule/widgets/widgets.dart';
-import 'package:intl/intl.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 DateTime firstDay = DateTime(2020);
 DateTime lastDay = DateTime(DateTime.now().year + 5);
@@ -75,8 +73,6 @@ class _ScheduleListviewState extends State<ScheduleListview> {
   late final ItemScrollController itemScrollController;
   late final ItemPositionsListener itemPositionsListener;
 
-  Size? _currentPositionedListSize;
-  int? _earlyChangePositionOffset;
   Timer? _debounce;
 
   final DateTimeRange _currentMonthRange = DateTimeRange(
@@ -86,13 +82,13 @@ class _ScheduleListviewState extends State<ScheduleListview> {
 
   final _monthChangeNotifier = ValueNotifier<int?>(null);
 
-  bool _isExpanded = false;
+  final _expansionNotifier = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
-    _earlyChangePositionOffset = 0;
     // Initialize the scroll controller and positions listener
+
     itemScrollController = ItemScrollController();
     itemPositionsListener = ItemPositionsListener.create();
 
@@ -111,6 +107,7 @@ class _ScheduleListviewState extends State<ScheduleListview> {
 
   @override
   void dispose() {
+    _expansionNotifier.dispose();
     _monthChangeNotifier.dispose();
     _debounce?.cancel();
     // Remove the item position listener when the widget is disposed
@@ -121,16 +118,19 @@ class _ScheduleListviewState extends State<ScheduleListview> {
   /// Listener for item position changes in the list.
   /// It checks the currently displayed position and updates the active date if needed.
   void _itemPositionListener() {
+    // If the app bar is expanded and the user scrolls, collapse the app bar first
+    if (_expansionNotifier.value) {
+      _expansionNotifier.value = false;
+      return;
+      // _scrollController.jumpTo(0); // Reset scroll position to top
+    }
     if (itemPositionsListener.itemPositions.value.isEmpty) {
       return;
     }
 
     // Get the displayed index only once after scrolling
     final displayedIndex = itemPositionsListener.getDisplayedPositionFromList(
-      dateRange.totalMonthsCount,
-      _earlyChangePositionOffset,
-      _currentPositionedListSize,
-    );
+        dateRange.totalMonthsCount, 0, Size.zero);
 
     if (displayedIndex != null) {
       _monthChangeNotifier.value = displayedIndex;
@@ -161,214 +161,72 @@ class _ScheduleListviewState extends State<ScheduleListview> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      mobile: (context) => SafeArea(
-        child: Column(
-          children: [
-            CustomAppbar(
-              monthChangeNotifier: _monthChangeNotifier,
-              currentMonthRange: _currentMonthRange,
-              onHeaderExpanded: (isExpanded) {
-                _isExpanded = isExpanded;
-                setState(() {});
-              },
-            ),
-            Expanded(
-              child: _buildMobileVIew(),
-            )
-          ],
-        ),
-      ),
+      mobile: (context) {
+        return SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              ValueListenableBuilder<bool>(
+                valueListenable: _expansionNotifier,
+                builder: (context, isExpanded, _) {
+                  return CustomAppbar(
+                    monthChangeNotifier: _monthChangeNotifier,
+                    currentMonthRange: _currentMonthRange,
+                    onHeaderExpanded: (isExpanded) {
+                      _expansionNotifier.value = isExpanded;
+                    },
+                    isExpanded: isExpanded,
+                  );
+                },
+              ),
+              SliverFillViewport(
+                delegate: SliverChildBuilderDelegate(
+                  childCount: 1,
+                  (context, index) {
+                    return _buildMobileVIew();
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
       tablet: (context) => const Placeholder(),
     );
   }
 
   Widget _buildMobileVIew() {
-    return SafeArea(
-      child: ScrollablePositionedList.builder(
-        key: const ValueKey<String>(
-          'schedule_grouped_list_view_builder',
-        ),
-        physics: _isExpanded ? const NeverScrollableScrollPhysics() : null,
-        itemScrollController: itemScrollController,
-        itemPositionsListener: itemPositionsListener,
-        itemCount: dateRange.totalMonthsCount,
-        itemBuilder: (context, index) {
-          final monthRange = dateRange.monthRanges[index];
-          final weeklyRanges = DateTimeUtils.getWeeklyDatesRange(
-            monthRange.start,
-            monthRange.end,
-          );
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MonthlyImageView(monthRange: monthRange),
-              5.0.verticalSpace,
-              ...List.generate(
-                weeklyRanges.length,
-                (index) {
-                  final weeklyRange = weeklyRanges[index];
-                  return ScheduleWeeklyDataView(
-                    weeklyRange: weeklyRange,
-                  );
-                },
-              ),
-              15.0.verticalSpace,
-            ],
-          );
-        },
+    return ScrollablePositionedList.builder(
+      key: const ValueKey<String>(
+        'schedule_grouped_list_view_builder',
       ),
-    );
-  }
-}
-
-class CustomAppbar extends StatefulWidget {
-  const CustomAppbar({
-    super.key,
-    required ValueNotifier<int?> monthChangeNotifier,
-    required DateTimeRange currentMonthRange,
-    this.onHeaderExpanded,
-  })  : _monthChangeNotifier = monthChangeNotifier,
-        _currentMonthRange = currentMonthRange;
-
-  final ValueNotifier<int?> _monthChangeNotifier;
-
-  final DateTimeRange _currentMonthRange;
-
-  final void Function(bool isExpanded)? onHeaderExpanded;
-
-  @override
-  State<CustomAppbar> createState() => _CustomAppbarState();
-}
-
-class _CustomAppbarState extends State<CustomAppbar>
-    with SingleTickerProviderStateMixin {
-  static final Animatable<double> _easeInTween =
-      CurveTween(curve: Curves.easeIn);
-  static final Animatable<double> _halfTween =
-      Tween<double>(begin: 0.0, end: 0.5);
-
-  late AnimationController _controller;
-  late Animation<double> _iconTurns;
-
-  bool _isExpanded = false;
-  Size? _calendarSize;
-
-  final _calendarKey = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPersistentFrameCallback((_) {
-      final box = _calendarKey.currentContext?.findRenderObject() as RenderBox?;
-      _calendarSize = box?.size;
-      setState(() {});
-    });
-
-    _initAnimation();
-  }
-
-  void _initAnimation() {
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 200));
-    _iconTurns = _controller.drive(_halfTween.chain(_easeInTween));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ValueListenableBuilder<int?>(
-          valueListenable: widget._monthChangeNotifier,
-          builder: (context, value, _) {
-            return ColoredBox(
-              color: Colors.red,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                    if (_isExpanded) {
-                      _controller.forward();
-                    } else {
-                      _controller.reverse().then<void>((void value) {
-                        if (!mounted) {
-                          return;
-                        }
-                        setState(() {
-                          // Rebuild without widget.children.
-                        });
-                      });
-                    }
-                  });
-
-                  widget.onHeaderExpanded?.call(_isExpanded);
-                },
-                child: MonthHeader(
-                  key: const ValueKey('month_scrolling_header'),
-                  value: (value ?? 0).toDouble(),
-                  range: dateRange,
-                  icon: _icon(),
-                ),
-              ),
-            );
-          },
-        ),
-        AnimatedSize(
-          duration: kThemeChangeDuration,
-          child: SizedBox(
-            height: _isExpanded ? _calendarSize?.height : 0,
-            child: _isExpanded ? _buildCalendarView() : const SizedBox.shrink(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  RotationTransition _icon() {
-    return RotationTransition(
-      turns: _iconTurns,
-      child: const Icon(
-        Icons.arrow_drop_down,
-        size: 24.0,
-      ),
-    );
-  }
-
-  Widget _buildCalendarView() {
-    return TableCalendar(
-      key: _calendarKey,
-      focusedDay: widget._currentMonthRange.start,
-      firstDay: firstDay,
-      lastDay: lastDay,
-      headerVisible: false,
-      calendarFormat: CalendarFormat.month,
-      startingDayOfWeek: StartingDayOfWeek.saturday,
-      weekendDays: const [],
-      daysOfWeekHeight: 40.0,
-      rowHeight: 48.0,
-      daysOfWeekStyle: DaysOfWeekStyle(
-        dowTextFormatter: (date, locale) => DateFormat.EEEEE(locale).format(
-          date,
-        ),
-        weekdayStyle: context.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ) ??
-            const TextStyle(),
-      ),
-      calendarStyle: CalendarStyle(
-        outsideDaysVisible: false,
-        todayDecoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: context.theme.primary,
-        ),
-        defaultTextStyle: context.textTheme.bodyMedium ?? const TextStyle(),
-      ),
+      itemScrollController: itemScrollController,
+      itemPositionsListener: itemPositionsListener,
+      itemCount: dateRange.totalMonthsCount,
+      itemBuilder: (context, index) {
+        log('index => $index');
+        final monthRange = dateRange.monthRanges[index];
+        final weeklyRanges = DateTimeUtils.getWeeklyDatesRange(
+          monthRange.start,
+          monthRange.end,
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MonthlyImageView(monthRange: monthRange),
+            5.0.verticalSpace,
+            ...List.generate(
+              weeklyRanges.length,
+              (index) {
+                final weeklyRange = weeklyRanges[index];
+                return ScheduleWeeklyDataView(
+                  weeklyRange: weeklyRange,
+                );
+              },
+            ),
+            15.0.verticalSpace,
+          ],
+        );
+      },
     );
   }
 }
