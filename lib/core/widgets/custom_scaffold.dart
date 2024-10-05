@@ -31,7 +31,9 @@ class CustomScaffold extends StatelessWidget {
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: bottomNavigationBar,
       drawer: drawer,
-      body: context.isMobile ? mobile.call(context) : tablet.call(context),
+      body: SafeArea(
+        child: context.isMobile ? mobile.call(context) : tablet.call(context),
+      ),
     );
   }
 }

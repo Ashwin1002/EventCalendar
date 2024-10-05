@@ -6,6 +6,9 @@ import 'package:google_calendar/src/schedule/widgets/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+typedef AnimatedCalendarHeight = Animation<double> Function(
+    AnimationController controller);
+
 class CustomAppbar extends StatefulWidget {
   const CustomAppbar({
     super.key,
@@ -13,6 +16,7 @@ class CustomAppbar extends StatefulWidget {
     required DateTimeRange currentMonthRange,
     this.onHeaderExpanded,
     this.isExpanded,
+    this.animatedCalendarHeight,
   })  : _monthChangeNotifier = monthChangeNotifier,
         _currentMonthRange = currentMonthRange;
 
@@ -22,6 +26,8 @@ class CustomAppbar extends StatefulWidget {
 
   final void Function(bool isExpanded)? onHeaderExpanded;
   final bool? isExpanded;
+
+  final AnimatedCalendarHeight? animatedCalendarHeight;
 
   @override
   State<CustomAppbar> createState() => _CustomAppbarState();
@@ -49,13 +55,6 @@ class _CustomAppbarState extends State<CustomAppbar>
   @override
   void initState() {
     super.initState();
-
-    // WidgetsBinding.instance.addPersistentFrameCallback((_) {
-    //   final box = _calendarKey.currentContext?.findRenderObject() as RenderBox?;
-    //   _calendarSize = box?.size;
-    //   setState(() {});
-    // });
-
     _initAnimation();
   }
 
@@ -69,6 +68,10 @@ class _CustomAppbarState extends State<CustomAppbar>
   @override
   void didUpdateWidget(covariant CustomAppbar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.animatedCalendarHeight != widget.animatedCalendarHeight) {
+      _heightFactor = widget.animatedCalendarHeight?.call(_controller) ??
+          _controller.drive(_heightTween.chain(_easeInTween));
+    }
     if (oldWidget.isExpanded != widget.isExpanded) {
       _isExpanded = widget.isExpanded ?? false;
       if (_isExpanded) {

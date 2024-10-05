@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:google_calendar/core/core.dart';
+import 'package:google_calendar/src/schedule/widgets/calendar_helper.dart';
 import 'package:google_calendar/src/schedule/widgets/widgets.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -72,8 +72,8 @@ class ScheduleListview extends StatefulWidget {
 class _ScheduleListviewState extends State<ScheduleListview> {
   late final ItemScrollController itemScrollController;
   late final ItemPositionsListener itemPositionsListener;
-
-  Timer? _debounce;
+  late final ScrollOffsetController scrollOffsetController;
+  late final ScrollOffsetListener scrollOffsetListener;
 
   final DateTimeRange _currentMonthRange = DateTimeRange(
     start: DateTimeUtils.firstDayOfMonth(DateTime.now().toUtc()),
@@ -84,6 +84,9 @@ class _ScheduleListviewState extends State<ScheduleListview> {
 
   final _expansionNotifier = ValueNotifier<bool>(false);
 
+  final Animatable<double> _heightTween =
+      Tween<double>(begin: kToolbarHeight, end: kCalendarHeight);
+
   @override
   void initState() {
     super.initState();
@@ -91,7 +94,9 @@ class _ScheduleListviewState extends State<ScheduleListview> {
 
     itemScrollController = ItemScrollController();
     itemPositionsListener = ItemPositionsListener.create();
+    scrollOffsetController = ScrollOffsetController();
 
+    scrollOffsetListener = ScrollOffsetListener.create();
     // Add the item position listener
     itemPositionsListener.itemPositions.addListener(_itemPositionListener);
 
@@ -103,15 +108,22 @@ class _ScheduleListviewState extends State<ScheduleListview> {
       _monthChangeNotifier.value = currentIdx;
       _triggerScrollInPositionedListIfNeeded(currentIdx, animate: false);
     });
+
+    scrollOffsetListener.changes.listen(
+      (event) {
+        log('offset event => $event');
+      },
+    );
   }
 
   @override
   void dispose() {
     _expansionNotifier.dispose();
     _monthChangeNotifier.dispose();
-    _debounce?.cancel();
+
     // Remove the item position listener when the widget is disposed
     itemPositionsListener.itemPositions.removeListener(_itemPositionListener);
+
     super.dispose();
   }
 
@@ -120,9 +132,8 @@ class _ScheduleListviewState extends State<ScheduleListview> {
   void _itemPositionListener() {
     // If the app bar is expanded and the user scrolls, collapse the app bar first
     if (_expansionNotifier.value) {
-      _expansionNotifier.value = false;
+      _expansionNotifier.value = !_expansionNotifier.value;
       return;
-      // _scrollController.jumpTo(0); // Reset scroll position to top
     }
     if (itemPositionsListener.itemPositions.value.isEmpty) {
       return;
@@ -175,6 +186,10 @@ class _ScheduleListviewState extends State<ScheduleListview> {
                       _expansionNotifier.value = isExpanded;
                     },
                     isExpanded: isExpanded,
+                    animatedCalendarHeight: (controller) {
+                      return controller.drive(_heightTween);
+                    },
+                    // calendarHeight: ,
                   );
                 },
               ),
@@ -201,9 +216,12 @@ class _ScheduleListviewState extends State<ScheduleListview> {
       ),
       itemScrollController: itemScrollController,
       itemPositionsListener: itemPositionsListener,
+      scrollOffsetController: scrollOffsetController,
+      scrollOffsetListener: scrollOffsetListener,
       itemCount: dateRange.totalMonthsCount,
+      initialScrollIndex: dateRange.monthRanges.indexOf(_currentMonthRange),
       itemBuilder: (context, index) {
-        log('index => $index');
+        // log('index => $index');
         final monthRange = dateRange.monthRanges[index];
         final weeklyRanges = DateTimeUtils.getWeeklyDatesRange(
           monthRange.start,
