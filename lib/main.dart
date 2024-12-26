@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_calendar/core/theme/material_theme.dart';
-import 'package:google_calendar/src/schedule/view/schedule_listview.dart';
+import 'package:google_calendar/src/calendar_header/calendar_appbar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       theme: materialTheme.light(),
       darkTheme: materialTheme.dark(),
       themeMode: ThemeMode.system,
-      home: const ScheduleListview(),
+      home: const CalendarAppbar(),
     );
   }
 }

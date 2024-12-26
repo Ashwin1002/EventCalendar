@@ -80,8 +80,8 @@ class MonthHeader extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16.0,
-              color: Colors.black.withOpacity(
-                opacity.clamp(0, 1),
+              color: Colors.black.withValues(
+                alpha: opacity.clamp(0, 1),
               ),
             ),
           ),
